@@ -8,118 +8,105 @@ class Grid
 		this.cells = [];
 
 		this.cursorPos = new Coords(0, 0);
+		this.isCellUnderCursorSelected = false;
 	}
 
-	cellAtPosGet(cellPos)
+	cellAtPosInCellsGetSourcePosInCells(cellPosInCells)
 	{
-		var cellIndex = this.indexOfCellAtPos(cellPos);
+		var cellIndex = this.indexOfCellAtPosInCells(cellPosInCells);
 		var cellValue = this.cells[cellIndex];
 		return cellValue;
 	}
 
-	cellAtPosSet(cellPos, valueToSet)
+	cellAtPosInCellsSetSourcePosInCells(cellPosInCells, sourcePosInCells)
 	{
-		var cellIndex = this.indexOfCellAtPos(cellPos);
-		this.cells[cellIndex] = valueToSet;
+		var cellIndex = this.indexOfCellAtPos(cellPosInCells);
+		this.cells[cellIndex] = sourcePosInCells;
+	}
+
+	cellUnderCursorToggleSelect()
+	{
+		this.isCellUnderCursorSelected =
+			(this.isCellUnderCursorSelected == false);
 	}
 
 	cursorMove(direction)
 	{
-		this.cursorPos.add
-		(
-			direction
-		).trimToRangeMax
+		var cursorPosNext =
+			this.cursorPos.clone().add(direction);
+
+		var canCursorBeMoved = cursorPosNext.isInRangeMaxExclusive
 		(
 			this.sizeInCells
 		);
-	}
 
-	indexOfCellAtPos(cellPos)
-	{
-		return cellPos.y * this.sizeInCells.x + cellPos.x;
-	}
-
-	openCellPos()
-	{
-		var cellPos = new Coords();
-
-		for (var y = 0; y < this.sizeInCells.y; y++)
+		if (canCursorBeMoved)
 		{
-			cellPos.y = y;
-			 
-			var cellValue = null;
-			 
-			for (var x = 0; x < this.sizeInCells.x; x++)
+			if (this.isCellUnderCursorSelected)
 			{
-				cellPos.x = x;
-				 
-				cellValue = this.cellAtPosGet(cellPos);
-				 
-				if (cellValue == null)
-				{
-					break;
-				}
+				this.swapCellsAtPositions(this.cursorPos, cursorPosNext);
 			}
-			 
-			if (cellValue == null)
-			{
-				break;
-			}
+
+			this.cursorPos.overwriteWith(cursorPosNext);
 		}
-		 
-		return cellPos;
+	}
+
+	indexOfCellAtPosInCells(cellPosInCells)
+	{
+		return cellPosInCells.y * this.sizeInCells.x + cellPosInCells.x;
 	}
 
 	randomize()
 	{
-		var numberOfCells = this.sizeInCells.x * this.sizeInCells.y;
+		var cellPositionsToPlaceRandomly = [];
 
-		for (var i = 0; i < numberOfCells; i++)
+		var cellPosInCells = new Coords();
+
+		var sizeInCells = this.sizeInCells;
+
+		for (var y = 0; y < sizeInCells.y; y++)
 		{
-			this.cells[i] = null;
+			cellPosInCells.y = y;
+
+			for (var x = 0; x < sizeInCells.x; x++)
+			{
+				cellPosInCells.x = x;
+
+				cellPositionsToPlaceRandomly.push(cellPosInCells.clone() );
+			}
 		}
 
-		for (var i = 0; i < numberOfCells - 1; i++)
+		var cellCount = sizeInCells.x * sizeInCells.y;
+
+		for (var i = 0; i < cellCount; i++)
 		{
-			var cellIndex = Math.floor
+			var cellPositionRandomIndex = Math.floor
 			(
-				Math.random() * numberOfCells
+				Math.random() * cellPositionsToPlaceRandomly.length
 			);
+			var cellPositionRandom =
+				cellPositionsToPlaceRandomly[cellPositionRandomIndex];
 
-			while (this.cells[cellIndex] != null)
-			{
-				cellIndex++;
-				if (cellIndex >= numberOfCells)
-				{
-					cellIndex = 0;
-				}
-			}
+			this.cells[i] = cellPositionRandom;
 
-			this.cells[cellIndex] = i;
-
+			cellPositionsToPlaceRandomly.splice(cellPositionRandomIndex, 1);
 		}
 
 		return this;
 	}
 
-	slideAtCursorIfPossible()
+	swapCellsAtPositions(posInCells0, posInCells1)
 	{
-		var openCellPos = this.openCellPos();
-		var displacement = openCellPos.clone().subtract
-		(
-			this.cursorPos
-		);
-		var distance = displacement.magnitude();
-		if (distance == 1)
-		{
-			var cellValueToSlide = this.cellAtPosGet(this.cursorPos);
-			this.cellAtPosSet(this.cursorPos, null);
-			this.cellAtPosSet(openCellPos, cellValueToSlide);
-		}
+		var cell0Index = this.indexOfCellAtPosInCells(posInCells0);
+		var cell1Index = this.indexOfCellAtPosInCells(posInCells1);
+
+		var temp = this.cells[cell0Index];
+		this.cells[cell0Index] = this.cells[cell1Index];
+		this.cells[cell1Index] = temp;
 	}
-	 
+
 	// drawable
-	 
+
 	drawToDisplay(display)
 	{
 		var cellSizeInPixels =
@@ -131,51 +118,51 @@ class Grid
 		var cellSizeInPixelsHalf =
 		cellSizeInPixels.clone().divideScalar(2);
 
-		var cellPos = new Coords();
+		var cellPosInCells = new Coords();
+		var sourcePosInPixels = new Coords();
 		var drawPos = new Coords();
-		var cellInde;
+		var cellIndex;
 		var cellValue;
+		var imageFull = Globals.Instance.imageLoaded;
 
 		for (var y = 0; y < this.sizeInCells.y; y++)
 		{
-			cellPos.y = y;
+			cellPosInCells.y = y;
 
 			for (var x = 0; x < this.sizeInCells.x; x++)
 			{
-				cellPos.x = x;
+				cellPosInCells.x = x;
 
-				cellValue = this.cellAtPosGet(cellPos);
+				var sourcePosInCells =
+					this.cellAtPosInCellsGetSourcePosInCells(cellPosInCells);
+
 				if (cellValue == null)
 				{
 					cellValue = "";
 				}
 
-				drawPos.overwriteWith
+				sourcePosInPixels.overwriteWith
 				(
-					cellPos
+					sourcePosInCells
 				).multiply
 				(
 					cellSizeInPixels
 				);
-				 
-				display.drawRectangle
+
+				drawPos.overwriteWith
 				(
-					drawPos,
-					cellSizeInPixels,
-					display.colorBack, // fill
-					display.colorFore // border
+					cellPosInCells
+				).multiply
+				(
+					cellSizeInPixels
 				);
-				 
-				drawPos.add
+
+				display.drawImagePartOfSizeAtPosToPos
 				(
-					cellSizeInPixelsHalf
-				);
-				 
-				display.drawText
-				(
-					"" + cellValue,
+					imageFull,
+					cellSizeInPixels, // size
+					sourcePosInPixels,
 					drawPos,
-					display.colorFore
 				);
 			}
 		}
@@ -192,26 +179,8 @@ class Grid
 		(
 			drawPos,
 			cellSizeInPixels,
-			display.colorFore, // fill
+			null, // fill
 			display.colorBack // border
-		);
-
-		drawPos.add
-		(
-			cellSizeInPixelsHalf
-		);
-
-		cellValue = this.cellAtPosGet(this.cursorPos);
-		if (cellValue == null)
-		{
-			cellValue = "";
-		}
-
-		display.drawText
-		(
-			"" + cellValue,
-			drawPos,
-			display.colorBack
 		);
 	}
 }

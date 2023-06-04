@@ -32,7 +32,7 @@ class InputHelper
 		}
 		else if (keyPressed == "Enter")
 		{
-			grid.slideAtCursorIfPossible();
+			grid.cellUnderCursorToggleSelect();
 		}
 
 		grid.drawToDisplay(Globals.Instance.display);

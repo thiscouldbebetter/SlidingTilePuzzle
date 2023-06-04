@@ -27,10 +27,23 @@ class Coords
 		this.y /= scalar;
 		return this;
 	}
-	 
+
 	clone()
 	{
 		return new Coords(this.x, this.y);
+	}
+
+	isInRangeMaxExclusive(max)
+	{
+		var isInRange =
+		(
+			this.x >= 0
+			&& this.x < max.x
+			&& this.y >= 0
+			&& this.y < max.y
+		);
+
+		return isInRange;
 	}
 
 	multiply(other)
@@ -39,7 +52,7 @@ class Coords
 		this.y *= other.y;
 		return this;
 	}
-	 
+
 	magnitude()
 	{
 		return Math.sqrt(this.x * this.x + this.y * this.y);

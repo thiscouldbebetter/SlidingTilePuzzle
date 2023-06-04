@@ -41,13 +41,22 @@ class Display
 		);
 	}
 
-	drawImageAtPos(imageToDraw, pos)
+	drawImagePartOfSizeAtPosToPos
+	(
+		imageToDraw,
+		size,
+		fromPos,
+		toPos
+	)
 	{
 		var systemImage = imageToDraw.systemImage;
 		this.graphics.drawImage
 		(
 			systemImage,
-			pos.x, pos.y
+			fromPos.x, fromPos.y,
+			size.x, size.y,
+			toPos.x, toPos.y,
+			size.x, size.y
 		);
 	}
 

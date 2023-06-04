@@ -6,10 +6,37 @@
 	<h3>Sliding-Tile Puzzle</h3>
 
 	<p>
-		A sliding-tile puzzle.  Press the arrow keys to move the cursor.
-		Press Enter to slide a tile into an adjacent empty space, if any.
+		A sliding-tile puzzle.  Upload an image file and specify
+		some number of tiles, then click the Start button.
+		The image will be broken into tiles, and those tiles
+		will be placed in random order.  Press the arrow keys to move the cursor.
+		Press Enter to "pick up" or "drop" the tile under the cursor.
+		While a tile is picked up, moving the cursor will swap it
+		with the neighbor in the specified direction.
 		The object is to get all of the tiles in order.
 	</p>
+
+	<div>
+		<label>Image to Load:</label>
+		<input type="file" onchange="inputFile_Changed(this);"></input>
+		<div id="divImageLoaded"></div>
+	</div>
+
+	<div>
+		<label>Size in Tiles:</label>
+		<div>
+			<label>Width:</label>
+			<input id="inputSizeInTilesX" type="number" min="1" step="1" value="4"></input>
+		</div>
+		<div>
+			<label>Height:</label>
+			<input id="inputSizeInTilesY" type="number" min="1" step="1" value="4"></input>
+		</div>
+	</div>
+
+	<button onclick="buttonStart_Clicked()">Start</button>
+
+	<div id="divDisplay"></div>
 
 </div>
 
@@ -17,12 +44,78 @@
 <script type="text/javascript" src="Display.js"></script>
 <script type="text/javascript" src="Globals.js"></script>
 <script type="text/javascript" src="Grid.js"></script>
+<script type="text/javascript" src="Image2.js"></script>
 <script type="text/javascript" src="InputHelper.js"></script>
 
-<script type="text/javascript" src="main.js"></script>
-
 <script type="text/javascript">
-main();
+
+function buttonStart_Clicked()
+{
+	var image = Globals.Instance.imageLoaded;
+	if (image == null)
+	{
+		alert("No image is specified!");
+		return;
+	}
+
+	var imageSizeInPixels = image.sizeInPixels();
+
+	var display = new Display
+	(
+		imageSizeInPixels,
+		10, // fontHeightInPixels
+		"White", // colorBack
+		"Gray" // colorFore
+	);
+
+	var gridSizeInCellsX =
+		parseInt(inputSizeInTilesX.value);
+	var gridSizeInCellsY =
+		parseInt(inputSizeInTilesY.value);
+
+	var gridSizeInCells = new Coords
+	(
+		gridSizeInCellsX, gridSizeInCellsY
+	);
+
+	var grid = new Grid
+	(
+		gridSizeInCells
+	).randomize();
+
+	Globals.Instance.initialize
+	(
+		display, grid
+	);
+}
+
+function inputFile_Changed(inputFile)
+{
+	var file = inputFile.files[0];
+	if (file != null)
+	{
+		var fileReader = new FileReader();
+		fileReader.onload = (event) =>
+		{
+			var d = document;
+			var imgElement = d.createElement("img");
+			imgElement.onload = (event2) =>
+			{
+				var image =
+					new Image2("ImageLoaded", imgElement);
+				Globals.Instance.imageLoaded = image;
+			}
+			imgElement.src = event.target.result;
+			var divImageLoaded =
+				d.getElementById("divImageLoaded");
+			divImageLoaded.appendChild(imgElement);
+
+		};
+		fileReader.readAsDataURL(file);
+	}
+}
+
 </script>
+
 </body>
 </html>
